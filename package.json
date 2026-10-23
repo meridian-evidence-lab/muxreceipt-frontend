@@ -1,0 +1,17 @@
+{
+  "name": "@meridian-evidence-lab/muxreceipt-frontend",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Contributor-ready muxreceipt dashboard for audit imports, exception review, history and contract proposals.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "test": "node --test test.mjs",
+    "demo": "node --test test.mjs",
+    "dev": "node dev.mjs"
+  }
+}

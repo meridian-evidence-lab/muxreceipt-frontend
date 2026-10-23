@@ -1,0 +1,11 @@
+import {createServer} from 'node:http';import {readFile} from 'node:fs/promises';
+export function createFrontend({apiUrl='http://127.0.0.1:4311',token=''}={}){
+ const base=new URL(apiUrl);if(!['127.0.0.1','localhost'].includes(base.hostname))throw new Error('Development proxy requires a loopback backend');
+ const assets={'/':['index.html','text/html'],'/styles.css':['styles.css','text/css'],'/app.mjs':['app.mjs','text/javascript']};
+ return createServer(async(req,res)=>{try{
+  const host=String(req.headers.host??'').split(':')[0];if(!['127.0.0.1','localhost'].includes(host)){res.writeHead(403);return res.end('Loopback host required');}
+  const path=new URL(req.url,'http://localhost').pathname;
+  if(path.startsWith('/api/')){const headers={};if(req.headers['content-type'])headers['content-type']=req.headers['content-type'];if(req.headers.origin)headers.origin=req.headers.origin;if(token)headers.authorization='Bearer '+token;let payload;if(!['GET','HEAD'].includes(req.method)){let size=0,chunks=[];for await(const chunk of req){size+=chunk.length;if(size>1048576){res.writeHead(413);return res.end('{"error":"Input exceeds 1 MiB"}');}chunks.push(chunk);}payload=Buffer.concat(chunks);}const upstream=await fetch(new URL(new URL(req.url,'http://localhost').pathname+new URL(req.url,'http://localhost').search,base),{method:req.method,headers,body:payload,signal:AbortSignal.timeout(15000),redirect:'error'});res.writeHead(upstream.status,{'content-type':upstream.headers.get('content-type')??'application/json','cache-control':'no-store','x-content-type-options':'nosniff','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'"});return res.end(Buffer.from(await upstream.arrayBuffer()));}
+  if(req.method!=='GET'||!assets[path]){res.writeHead(404);return res.end('Not found');}const [file,type]=assets[path];res.writeHead(200,{'content-type':type+'; charset=utf-8','x-content-type-options':'nosniff','content-security-policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"});res.end(await readFile(new URL('./'+file,import.meta.url)));
+ }catch{res.writeHead(502,{'content-type':'application/json'});res.end('{"error":"Local backend unavailable"}');}});
+}

@@ -1,0 +1,1 @@
+import {createFrontend} from './index.mjs';const port=Number(process.env.PORT??4310);const server=createFrontend({apiUrl:process.env.API_URL??'http://127.0.0.1:4311',token:process.env.API_TOKEN??''});server.listen(port,'127.0.0.1',()=>console.log('MuxReceipt workspace on http://127.0.0.1:'+port));for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>server.close());
